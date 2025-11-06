@@ -22,9 +22,11 @@ Este guia ensina como configurar commits assinados automaticamente com GPG no Wi
   - [4. Exportar Chave Pública](#4-exportar-chave-pública)
   - [5. Adicionar no GitHub/GitLab](#5-adicionar-no-githubgitlab)
   - [6. Testar](#6-testar)
+- [Assinatura Manual (Quando Necessário)](#-assinatura-manual-quando-necessário)
 - [Configurações Avançadas](#configurações-avançadas)
 - [Troubleshooting](#troubleshooting)
 - [Comandos Úteis](#comandos-úteis)
+- [Scripts de Automação](#-script-de-configuração-automática)
 
 ---
 
@@ -43,6 +45,17 @@ Este guia ensina como configurar commits assinados automaticamente com GPG no Wi
 ✅ Verified
 This commit was signed with a verified signature
 ```
+
+### 🔀 Duas Abordagens de Assinatura:
+
+Este guia cobre **duas estratégias**:
+
+| Estratégia | Quando Usar | Configuração |
+|-----------|-------------|--------------|
+| **🔐 Automática** | Todos os commits assinados | `commit.gpgsign = true` |
+| **✍️ Manual** | Assinar apenas quando necessário | `commit.gpgsign = false` + `git commit -S` |
+
+📖 **Siga a configuração básica primeiro**, depois escolha sua estratégia na seção [Assinatura Manual](#-assinatura-manual-quando-necessário).
 
 ---
 
@@ -192,23 +205,23 @@ gpg --list-secret-keys --keyid-format=long
 **Exemplo de saída:**
 
 ```
-sec   rsa4096/3AA5C34371567BD25 2025-01-15 [SC]
+sec   rsa4096/3AA5C34371567BD2 2025-01-15 [SC]
       ABCD1234EFGH5678IJKL9012MNOP3456QRST7890
 uid                 [ultimate] Pedro Vieira <seu-email@exemplo.com>
 ssb   rsa4096/4BB6D45482678CE3 2025-01-15 [E]
 ```
 
-📌 **Seu ID da chave é:** `3AA5C34371567BD25` (depois de `rsa4096/`)
+📌 **Seu ID da chave é:** `3AA5C34371567BD2` (depois de `rsa4096/`)
 
 ---
 
 ### 3. Configurar Git
 
-Substitua `3AA5C34371567BD25` pelo **seu ID da chave**:
+Substitua `3AA5C34371567BD2` pelo **seu ID da chave**:
 
 ```bash
 # Configure o ID da sua chave
-git config --global user.signingkey 3AA5C34371567BD25
+git config --global user.signingkey 3AA5C34371567BD2
 
 # Ative assinatura automática de commits
 git config --global commit.gpgsign true
@@ -301,6 +314,326 @@ gpg: Good signature from "Pedro Vieira <seu-email@exemplo.com>" [ultimate]
 ```
 
 ✅ Faça push e veja o badge **"Verified"** no GitHub!
+
+---
+
+## 🔓 Assinatura Manual (Quando Necessário)
+
+Se você prefere **não assinar automaticamente** todos os commits e assinar apenas quando necessário, siga estas configurações:
+
+### Desativar Assinatura Automática
+
+#### Globalmente (todos os repositórios):
+
+```bash
+# Desativa assinatura automática de commits
+git config --global commit.gpgsign false
+
+# Desativa assinatura automática de tags
+git config --global tag.gpgSign false
+```
+
+#### Apenas no repositório atual:
+
+```bash
+# Entre na pasta do repositório
+cd seu-repositorio
+
+# Desativa apenas neste repo
+git config commit.gpgsign false
+git config tag.gpgSign false
+```
+
+---
+
+### Assinar Manualmente Quando Quiser
+
+Mesmo com a assinatura automática desativada, você pode assinar commits específicos:
+
+#### Commits:
+
+```bash
+# Commit COM assinatura
+git commit -S -m "Mensagem do commit"
+
+# Ou usando --gpg-sign
+git commit --gpg-sign -m "Mensagem do commit"
+
+# Commit SEM assinatura (padrão agora)
+git commit -m "Mensagem normal"
+```
+
+#### Tags:
+
+```bash
+# Tag COM assinatura
+git tag -s v1.0.0 -m "Version 1.0.0"
+
+# Tag SEM assinatura
+git tag v1.0.0 -m "Version 1.0.0"
+```
+
+#### Merges:
+
+```bash
+# Merge COM assinatura
+git merge --gpg-sign branch-name
+
+# Merge SEM assinatura
+git merge branch-name
+```
+
+---
+
+### Configuração Híbrida (Recomendado)
+
+#### Opção 1: Global OFF, Local ON em projetos específicos
+
+```bash
+# Desativa globalmente
+git config --global commit.gpgsign false
+
+# Ativa apenas em projetos importantes
+cd projeto-critico
+git config commit.gpgsign true
+```
+
+#### Opção 2: Criar Aliases para Commits Assinados
+
+```bash
+# Cria atalhos úteis
+git config --global alias.c 'commit'
+git config --global alias.cs 'commit -S'
+git config --global alias.csm 'commit -S -m'
+git config --global alias.ca 'commit --amend -S'
+
+# Uso:
+git c -m "Commit normal"           # SEM assinatura
+git cs -m "Commit assinado"        # COM assinatura
+git csm "Rápido e assinado"        # COM assinatura (atalho)
+git ca                             # Amend assinado
+```
+
+#### Opção 3: Adicionar ao ~/.gitconfig
+
+Edite `~/.gitconfig` e adicione:
+
+```ini
+[alias]
+    # Commit normal
+    c = commit
+    
+    # Commit assinado
+    cs = commit -S
+    
+    # Commit assinado com mensagem
+    csm = commit -S -m
+    
+    # Amend assinado
+    ca = commit --amend -S
+    
+    # Merge assinado
+    ms = merge --gpg-sign
+```
+
+---
+
+### Verificar Estado da Assinatura Automática
+
+```bash
+# Ver configuração global
+git config --global commit.gpgsign
+git config --global tag.gpgSign
+
+# Ver configuração local (repositório atual)
+git config commit.gpgsign
+git config tag.gpgSign
+
+# Ver TODAS as configurações GPG
+git config --global --list | grep gpg
+```
+
+**Saídas possíveis:**
+- `true` = Assinatura automática **ATIVADA** ✅
+- `false` = Assinatura automática **DESATIVADA** ❌
+- (vazio) = Não configurado (padrão = desativado)
+
+---
+
+### Comparação de Estratégias
+
+| Configuração | Commit Normal | Commit com -S | Melhor Para |
+|--------------|---------------|---------------|-------------|
+| `gpgsign = true` | Assinado ✅ | Assinado ✅ | Projetos críticos/corporativos |
+| `gpgsign = false` | NÃO assinado ❌ | Assinado ✅ | Uso geral/flexível |
+| Não configurado | NÃO assinado ❌ | Assinado ✅ | Padrão Git |
+
+---
+
+### Quando Assinar vs. Não Assinar
+
+#### ✅ Recomendado ASSINAR:
+
+- ✅ Releases e tags de versão
+- ✅ Commits em branch `main`/`master`
+- ✅ Merges de pull requests importantes
+- ✅ Projetos open source públicos
+- ✅ Repositórios corporativos sensíveis
+- ✅ Código que vai para produção
+
+#### ❌ Pode NÃO assinar:
+
+- ❌ Commits WIP (Work In Progress)
+- ❌ Branches de feature pessoais
+- ❌ Experimentos e testes
+- ❌ Repositórios privados de estudo
+- ❌ Commits frequentes de desenvolvimento
+
+---
+
+### Script Toggle (Ligar/Desligar Rapidamente)
+
+Salve como `toggle-gpg-signing.sh`:
+
+```bash
+#!/bin/bash
+
+echo "🔐 Toggle GPG Auto-Signing"
+echo "=========================="
+echo ""
+
+# Verifica estado atual
+CURRENT=$(git config --global commit.gpgsign)
+
+if [ "$CURRENT" = "true" ]; then
+    # Desativa
+    git config --global commit.gpgsign false
+    git config --global tag.gpgSign false
+    echo "🔓 Assinatura automática DESATIVADA"
+    echo "→ Use 'git commit -S' para assinar manualmente"
+else
+    # Ativa
+    git config --global commit.gpgsign true
+    git config --global tag.gpgSign true
+    echo "🔐 Assinatura automática ATIVADA"
+    echo "→ Todos os commits serão assinados automaticamente"
+fi
+
+# Mostra estado atual
+echo ""
+echo "Estado atual:"
+git config --global --list | grep gpg
+```
+
+**Tornar executável e usar:**
+
+```bash
+chmod +x toggle-gpg-signing.sh
+./toggle-gpg-signing.sh  # Alterna entre ON/OFF
+```
+
+---
+
+### Assinar Commits Existentes (Retroativamente)
+
+Se você já tem commits não assinados e quer assiná-los:
+
+#### Assinar o último commit:
+
+```bash
+git commit --amend -S --no-edit
+```
+
+#### Assinar múltiplos commits (rebase interativo):
+
+```bash
+# Assinar últimos 5 commits
+git rebase -i HEAD~5
+
+# No editor, mude 'pick' para 'edit' nos commits desejados
+# Salve e feche o editor
+
+# Para cada commit marcado como 'edit':
+git commit --amend -S --no-edit
+git rebase --continue
+
+# Repita até finalizar o rebase
+```
+
+⚠️ **ATENÇÃO:** 
+- Isso **reescreve o histórico** do Git
+- **NÃO faça** em branches já publicadas/compartilhadas
+- Apenas em branches locais ou features pessoais
+
+---
+
+### Estratégia por Branch
+
+Configure assinatura diferente por branch:
+
+```bash
+# Branch main: sempre assinado
+git checkout main
+git config commit.gpgsign true
+
+# Branch de feature: manual
+git checkout -b feature/nova-funcionalidade
+git config commit.gpgsign false
+
+# Commits de desenvolvimento (sem assinatura)
+git commit -m "WIP: trabalhando..."
+
+# Commit final antes do merge (COM assinatura)
+git commit -S -m "feat: adiciona funcionalidade completa"
+```
+
+---
+
+### Configuração Recomendada para a Maioria
+
+```bash
+# 1. Desativa assinatura automática (mais flexível)
+git config --global commit.gpgsign false
+git config --global tag.gpgSign false
+
+# 2. Mantém chave configurada (para uso manual)
+git config --global user.signingkey SUA_CHAVE_ID
+
+# 3. Cria aliases úteis
+git config --global alias.cs 'commit -S'
+git config --global alias.csm 'commit -S -m'
+
+# 4. Ativa em repos específicos quando necessário
+cd repo-importante
+git config commit.gpgsign true
+```
+
+### Seu .gitconfig Final
+
+Com assinatura **manual**, seu `~/.gitconfig` deve ficar:
+
+```ini
+[user]
+    name = Seu Nome
+    email = seu-email@exemplo.com
+    signingkey = 3AA5C34371567BD2
+
+[commit]
+    gpgsign = false   # ← Assinatura MANUAL
+
+[tag]
+    gpgSign = false   # ← Tags manuais
+
+[gpg]
+    program = gpg
+
+[alias]
+    c = commit
+    cs = commit -S
+    csm = commit -S -m
+    ca = commit --amend -S
+    ms = merge --gpg-sign
+```
 
 ---
 
