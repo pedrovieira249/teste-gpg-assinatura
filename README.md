@@ -192,23 +192,23 @@ gpg --list-secret-keys --keyid-format=long
 **Exemplo de saída:**
 
 ```
-sec   rsa4096/3AA5C34371567BD2 2025-01-15 [SC]
+sec   rsa4096/3AA5C34371567BD25 2025-01-15 [SC]
       ABCD1234EFGH5678IJKL9012MNOP3456QRST7890
 uid                 [ultimate] Pedro Vieira <seu-email@exemplo.com>
 ssb   rsa4096/4BB6D45482678CE3 2025-01-15 [E]
 ```
 
-📌 **Seu ID da chave é:** `3AA5C34371567BD2` (depois de `rsa4096/`)
+📌 **Seu ID da chave é:** `3AA5C34371567BD25` (depois de `rsa4096/`)
 
 ---
 
 ### 3. Configurar Git
 
-Substitua `3AA5C34371567BD2` pelo **seu ID da chave**:
+Substitua `3AA5C34371567BD25` pelo **seu ID da chave**:
 
 ```bash
 # Configure o ID da sua chave
-git config --global user.signingkey 3AA5C34371567BD2
+git config --global user.signingkey 3AA5C34371567BD25
 
 # Ative assinatura automática de commits
 git config --global commit.gpgsign true
